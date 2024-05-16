@@ -1,0 +1,269 @@
+-------------------- Conexão
+
+
+package br.com.fiap.dao;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class Conexao {
+	
+	private static final String URL = "jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl";
+	private static final String USUARIO = "RM553011";
+	private static final String SENHA = "fiap24";
+
+	
+	public static Connection abrirConexao() {
+		Connection conexao = null;
+		
+		try {
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			
+			conexao = DriverManager.getConnection(URL, USUARIO, SENHA);
+			
+			
+		} catch (ClassNotFoundException e) {
+
+			System.err.println("Erro de conexão");
+		} catch (SQLException e) {
+			System.err.println("Úsuario, senha ou URL invalido");
+		}
+		
+		System.out.println("Conexão Feita com sucesso");
+		
+		return conexao;
+	}
+
+}
+
+---------------------------------------- Teste Fintech
+
+package com.fiap;
+
+// import br.com.fiap.dao.BancoContaDAO;
+// import java.util.Scanner;
+import br.com.fiap.dao.Conexao;
+import br.com.fiap.dao.UsuarioDAO;
+
+public class TesteFintech {
+	
+	public static void main(String[] args) {
+		
+		
+		Usuario usuario = new Usuario();
+		
+		usuario.setNomeCompleto("Joao");
+		usuario.setNrCPF("471.007.588-36");
+		usuario.setDtAniversario(1990,9,3);
+		usuario.setDsSexo("M");
+		usuario.setDsEmail("Joao.@gmail.com");
+		usuario.setDsProfissao("Programador");
+		usuario.setVlSalario(3000.0);
+		usuario.setSenha("Agiota");
+		
+		UsuarioDAO usuarioDAO = new UsuarioDAO(Conexao.abrirConexao());
+		usuarioDAO.gravar(usuario);
+		
+		/*
+		if (cdUsuario != null) {
+		BancoConta bancoConta = new BancoConta();
+		bancoConta.setNroBanco(1);
+		bancoConta.setNomeBanco("Santander");
+		bancoConta.setAgencia(15);
+		bancoConta.setConta(1220409);
+		bancoConta.setSaldo(1200.0);
+		
+		BancoContaDAO bancoContaDAO = new BancoContaDAO(Conexao.abrirConexao());
+		bancoContaDAO.gravar(bancoConta, cdUsuario);
+		*/
+		/*s
+        System.out.println("Conta bancária registrada com sucesso.");
+    } else {
+        System.err.println("Falha ao registrar usuário e conta bancária.");
+    }
+		*/
+		
+		/*
+		
+		Scanner scanner = new Scanner(System.in);
+		Usuario user = new Usuario();
+		Carteira carteira = new Carteira();
+		BancoConta bancoConta = new BancoConta();
+		Endereco endereco = new Endereco();
+		BancoContaPoupanca contaPoupanca = new BancoContaPoupanca();
+		
+		user.setNomeCompleto("Danilo Costa");	
+		carteira.receber(5000);
+		bancoConta.depositar(700);	
+		contaPoupanca.depositar(900);
+		contaPoupanca.retirar(500);
+		contaPoupanca.setSaldo(1000);
+		endereco.setNmBairro("Alphaville");
+		
+			
+        System.out.print("Digite o número de dias que o saldo ficará rendendo: ");
+        int dias = scanner.nextInt();
+        double jurosAcumulados = contaPoupanca.calcularJuros(dias);
+        double saldoAtualFinal = contaPoupanca.getSaldoFinal();
+        
+		
+		System.out.println(user.getNomeCompleto());
+		System.out.println(carteira.getSaldo());
+		System.out.println(bancoConta.getSaldo());
+		System.out.println(endereco.getNmBairro());
+		System.out.println("Após " + dias + " dias, os juros acumulados serão: R$" + jurosAcumulados);
+		System.out.println("Saldo atual final da conta poupança: " + saldoAtualFinal);
+		
+        scanner.close();
+        
+        */
+	}
+	
+ 
+}
+
+---------------------------- BancoContaDAO (FAZER)
+
+package br.com.fiap.dao;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import com.fiap.BancoConta;
+
+public class BancoContaDAO {
+
+	
+	private Connection conexao;
+	
+	public BancoContaDAO(Connection conexao) {
+		this.conexao = conexao;
+	}
+
+	public void gravar(BancoConta bancoConta, String cdUsuario) {
+		
+		String sql = "INSERT INTO T_SIP_BANCO (id_banco, cd_banco, nm_banco, nr_agencia, nr_conta, saldo, cd_usuario)"
+				+ "VALUES (SQ_T_USUARIO.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+		
+		try (PreparedStatement ps = conexao.prepareStatement(sql)){	
+			ps.setInt(2, bancoConta.getNroBanco());
+			ps.setString(3, bancoConta.getNomeBanco());	
+			ps.setInt(4, bancoConta.getAgencia());
+			ps.setInt(5, bancoConta.getConta());
+			ps.setDouble(6, bancoConta.getSaldo());
+			ps.setString(7, cdUsuario);
+			
+            ps.executeUpdate();
+
+            System.out.println("Registro do Banco feito com Sucesso!");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+			
+	public void excluir(BancoConta bancoConta) {
+	}
+	
+	public void atualizar(BancoConta bancoConta) {
+	}
+	
+	public void ListarTodos(BancoConta bancoConta) {
+	}
+	
+}
+
+--------------------------- UsuarioDAO (FEITA)
+
+package br.com.fiap.dao;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.ResultSet;
+/*
+import java.util.ArrayList;
+import java.util.List;
+*/
+
+
+import com.fiap.Usuario;
+
+public class UsuarioDAO {
+
+	
+	private Connection conexao;
+	
+	public UsuarioDAO(Connection conexao) {
+		this.conexao = conexao;
+	}
+
+	public String gravar(Usuario usuario) {
+		
+		String sql = "INSERT INTO T_SIP_USUARIO (nm_user, cd_usuario, cpf, dt_nascimento, sexo, ds_email, ds_profissao, vl_salario, senha)"
+				+ "VALUES (?, SQ_T_USUARIO.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+		
+		try {
+			PreparedStatement ps = conexao.prepareStatement(sql);	
+			ps.setString(1, usuario.getNomeCompleto());
+			ps.setString(2, usuario.getNrCPF());	
+			Date data = Date.valueOf(usuario.getDtAniversario());
+			ps.setDate(3, data);
+			ps.setString(4, usuario.getDsSexo());
+			ps.setString(5, usuario.getDsEmail());
+			ps.setString(6, usuario.getDsProfissao());
+			ps.setDouble(7, usuario.getVlSalario());
+			ps.setString(8, usuario.getSenha());
+			
+	        ps.executeUpdate();
+	        try (ResultSet rs = ps.getGeneratedKeys()) {
+	            if (rs.next()) {
+	                return rs.getString(1); // Supondo que cd_usuario é a primeira coluna retornada
+	            }
+	        }
+	       ps.close();
+	       conexao.close();
+	       System.out.println("Registro do Usuario feito com Sucesso!");
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return null;
+	}
+	
+	public void excluir(Usuario usuario) {
+	}
+	
+	public void atualizar(Usuario usuario) {
+	}
+	/*
+	public List<Usuario> ListarTodos() {
+		
+		String sql = "SELECT * FROM T_SIP_USUARIO ORDER BY cd_usuario";
+		
+		List<Usuario> list = new ArrayList<Usuario>();
+		
+		
+		try {
+			PreparedStatement ps = conexao.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next()) {
+				Usuario usuario = new Usuario();
+				usuario.setCdUsuario(rs.getString("cd_usuario"));
+				usuario.setNomeCompleto(rs.getString("nm_user"));
+				usuario.setVlSalario(rs.getDouble("vl_salario"));
+				Date data = rs.getDate("dt_nascimento");
+				usuario.setDtAniversario(data.toLocalDate());
+				
+				//int idBanco = rs.getInt("id_banco");
+				
+			}
+			
+		} catch(SQLException e) {
+			
+			e.printStackTrace();
+		}
+		return list;
+	}*/
+	
+}
